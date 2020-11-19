@@ -1,19 +1,19 @@
 import java.util.Random;
 public class StudentThread extends Thread{
-	
 	public static final int GIRL = 0;
 	public static final int BOY = 1;
 	public static final int MAX_SLEEP_TIME = 10000;
 	public static long time = System.currentTimeMillis();
 	private String Student_Id;
 	private int gender;
-	private int busy = 0;
-	private int waitingForBathroom = 0;
+	private int busy;
+	private int waiting;
 	private int doneWithBathroom = 0;
 
 	public StudentThread(String id){
 		this.Student_Id = id;
 		this.gender = getRandomGender();
+		this.printMessage(" Gender is: " + this.gender);
 	}
 
 	public void run(){
@@ -26,21 +26,38 @@ public class StudentThread extends Thread{
 		//Student commutes to school
 		this.sleepMessage(" is commuting to school");
 		
+		//wait to be let into the school
 		this.printMessage(" waiting in the schoolyard to be called by teacher");
-		this.busy++;
+		this.busy = 1;
 		while(this.busy == 1){/*wait in schoolyard*/}
 		this.printMessage(" has been let in by the teacher");
 
 		//waiting for bathroom
 		this.printMessage(" waiting for bathroom");
-		this.waitingForBathroom++;
-		while(this.waitingForBathroom == 1){
+		this.waiting = 1;
+		while(this.waiting == 1){
 			this.yield();
 			this.yield();
 			this.yield();
 		}
 		this.sleepMessage(" is using the bathroom");
+		this.printMessage(" is done using the bathroom");
 		this.doneWithBathroom++;
+		
+		//this decides if the student is excited or not
+		if(this.isStudentExcited()){
+			this.printMessage(" is excited to learn!");
+			this.setPriority(MAX_PRIORITY);
+			this.sleepMessage(" priority increased");
+			this.setPriority(NORM_PRIORITY);
+			this.printMessage(" priority set back to normal");
+		}
+		
+		//wait for first class to start
+		this.printMessage(" is waiting for the first class to start");
+		this.waiting = 1;
+		while(this.waiting == 1){/* waiting for class to begin */}
+		this.sleepMessage(" is attending the first class and is now sleeping.");
 
 		//Student finishes day
 		this.printMessage(" is done");
@@ -74,11 +91,18 @@ public class StudentThread extends Thread{
 	
 	public int getRandomGender(){
 		Random rand = new Random();
-		int retval = rand.nextInt(BOY);
+		int retval = rand.nextInt(2);
 
 		return retval;
 	}
 	
+	public boolean isStudentExcited(){
+		Random rand = new Random();
+		int i = rand.nextInt(3);
+
+		return i == 1;
+	}
+
 	public int getBusy(){
 		return this.busy;
 	}
@@ -87,12 +111,12 @@ public class StudentThread extends Thread{
 		this.busy = busy;
 	}
 	
-	public int getWaitingForBathroom(){
-		return this.waitingForBathroom;
+	public int getWaiting(){
+		return this.waiting;
 	}
 
-	public void setWaitingForBathroom(int waiting){
-		this.waitingForBathroom = waiting;
+	public void setWaiting(int new_waiting){
+		this.waiting = new_waiting;
 	}
 	
 	public int getGender(){
