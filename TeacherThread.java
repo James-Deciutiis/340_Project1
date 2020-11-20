@@ -5,7 +5,7 @@ public class TeacherThread extends Thread{
 	public static final int GIRL = 0;
 	public static final int BOY = 1;
 	public static long time = System.currentTimeMillis();
-	private int classSize = 1;
+	private int classSize = 4;
 	private int girlsBathroomCount = 0;
 	private int boysBathroomCount = 0;
 	private StudentThread [] students;
@@ -76,27 +76,52 @@ public class TeacherThread extends Thread{
 			}
 		}
 		
+		//just for the first class, make sure all students are ready
 		this.sleepMessage("is getting ready to teach first class."); 
-		for(int i = 0; i < classSize; i++){
-			System.out.println("hellow");	
-			students[i].setWaiting(0);	
-		}
 		this.printMessage("is teaching the first class, period 1");
-		
+		for(int i = 0; i < classSize;){
+			if(students[i].getWaitingForClass() == 1){
+				students[i].setWaitingForClass(0);	
+				i++;
+			}
+		}
 		try{
-			this.sleep(10000);
+			this.sleep(100);
 		}
 		catch(InterruptedException e){
 		}
-
-		//teaching first class now
+		this.wakeUpStudents();
+		
+		atomicBoolean.set(true);
+		int period = 1;
+		//teach the rest of the classes
+		while(atomicBoolean.get()){
+			this.sleepMessage(" is getting ready to teach next class.");
+			this.printMessage("is teaching the next class, period: " + period);
 			
+			for(int i = 0; i < classSize; i++){
+				if(students[i].getBusy() == 0){
+					students[i].sleepMessage(" is in class, period: " + period + " and has fallen asleep.");		
+				}
+			}
+			
+			try{
+				this.sleep(100);
+			}
+			catch(InterruptedException e){
+			}
+			this.wakeUpStudents();	
+
+			period++;
+
+			if(period == 5){
+				atomicBoolean.set(false);
+			}
+		}
 
 		System.out.println("TEST TEST TEST TEST");
 	}
 	
-	
-
 	public void run(){
 		System.out.println("Teacher thread created");
 	}
@@ -104,7 +129,7 @@ public class TeacherThread extends Thread{
 	public void sleepMessage(String msg){
 		try{
 			System.out.println("[" + (System.currentTimeMillis() - time) + "] " + "Teacher " + msg);
-			this.sleep(10000);
+			this.sleep(6000);
 		}
 		catch(InterruptedException e){
 
@@ -115,6 +140,14 @@ public class TeacherThread extends Thread{
 		System.out.println("[" + (System.currentTimeMillis() - time) + "] " + "Teacher " + msg);
 	}
 	
+	public void wakeUpStudents(){
+		for(int i = 0; i < this.classSize; i++){
+			if(!this.students[i].isInterrupted()){
+				this.students[i].interruptMessage(" is woken up by the teacher! (INTERRUPTED)");
+			}
+		}
+	}
+
 	public boolean getIsTeaching(){
 		return this.isTeaching;
 	}

@@ -8,7 +8,9 @@ public class StudentThread extends Thread{
 	private int gender;
 	private int busy;
 	private int waiting;
+	private int waitingForClass;
 	private int doneWithBathroom = 0;
+	private boolean schoolInSession = true;
 
 	public StudentThread(String id){
 		this.Student_Id = id;
@@ -29,16 +31,19 @@ public class StudentThread extends Thread{
 		//wait to be let into the school
 		this.printMessage(" waiting in the schoolyard to be called by teacher");
 		this.busy = 1;
-		while(this.busy == 1){/*wait in schoolyard*/}
+		while(this.busy == 1){
+			this.idle();
+		}
 		this.printMessage(" has been let in by the teacher");
 
 		//waiting for bathroom
 		this.printMessage(" waiting for bathroom");
 		this.waiting = 1;
+		this.yield();
+		this.yield();
+		this.yield();
 		while(this.waiting == 1){
-			this.yield();
-			this.yield();
-			this.yield();
+			this.idle();
 		}
 		this.sleepMessage(" is using the bathroom");
 		this.printMessage(" is done using the bathroom");
@@ -55,9 +60,19 @@ public class StudentThread extends Thread{
 		
 		//wait for first class to start
 		this.printMessage(" is waiting for the first class to start");
-		this.waiting = 1;
-		while(this.waiting == 1){/* waiting for class to begin */}
+		this.waitingForClass = 1;
+		while(this.waitingForClass == 1){
+			this.idle();
+		}
 		this.sleepMessage(" is attending the first class and is now sleeping.");
+		
+		//student tries to have fun between class
+		while(this.schoolInSession){	
+			this.busy = 1;
+			this.sleepMessage(" is hurrying to have fun before next class");
+			this.busy = 0;	
+			this.waiting = 1;
+		}
 
 		//Student finishes day
 		this.printMessage(" is done");
@@ -69,7 +84,16 @@ public class StudentThread extends Thread{
 			this.sleep(this.getRandomSleepTime());
 		}
 		catch(InterruptedException e){
+			return;
+		}
+	}
 
+	public void idle(){
+		try{
+			this.sleep(1);
+		}
+		catch(InterruptedException e){
+			return;
 		}
 	}
 
@@ -102,6 +126,10 @@ public class StudentThread extends Thread{
 
 		return i == 1;
 	}
+	
+	public void setSchoolInSession(boolean session){
+		this.schoolInSession = session;
+	}
 
 	public int getBusy(){
 		return this.busy;
@@ -117,6 +145,14 @@ public class StudentThread extends Thread{
 
 	public void setWaiting(int new_waiting){
 		this.waiting = new_waiting;
+	}
+	
+	public int getWaitingForClass(){
+		return this.waitingForClass;
+	}
+
+	public void setWaitingForClass(int new_waiting){
+		this.waitingForClass = new_waiting;
 	}
 	
 	public int getGender(){
