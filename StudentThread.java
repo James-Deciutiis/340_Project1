@@ -10,6 +10,7 @@ public class StudentThread extends Thread{
 	private int waiting;
 	private int waitingForClass;
 	private int doneWithBathroom = 0;
+	private boolean classInSession = false;
 	private boolean schoolInSession = true;
 
 	public StudentThread(String id){
@@ -53,7 +54,7 @@ public class StudentThread extends Thread{
 		if(this.isStudentExcited()){
 			this.printMessage(" is excited to learn!");
 			this.setPriority(MAX_PRIORITY);
-			this.sleepMessage(" priority increased");
+			this.sleepMessage(" priority increased, now sleeping");
 			this.setPriority(NORM_PRIORITY);
 			this.printMessage(" priority set back to normal");
 		}
@@ -65,13 +66,47 @@ public class StudentThread extends Thread{
 			this.idle();
 		}
 		this.sleepMessage(" is attending the first class and is now sleeping.");
+		this.classInSession = false;
+		this.sleepMessage(" is hurrying to have fun before next class");
 		
 		//student tries to have fun between class
+		int period = 2;
 		while(this.schoolInSession){	
+			if(period == 5){
+				this.schoolInSession = false;
+			}
+			this.waiting = 0;
 			this.busy = 1;
-			this.sleepMessage(" is hurrying to have fun before next class");
-			this.busy = 0;	
+			if(this.classInSession){
+				this.sleepMessage(" has missed period: " + period + " and is now wandering around campus");	
+				period++;
+				while(this.classInSession){
+					this.idle();
+				}
+				continue;
+			}
+			
 			this.waiting = 1;
+			this.printMessage(" busy waiting for the next class to start");
+			while(this.waiting == 1){
+				this.idle();
+			}
+
+			if(period == 3){
+				this.sleepMessage(" is in office hours, period: " + period + " and has fallen asleep.");		
+			}
+			else{
+				this.sleepMessage(" is in class, period: " + period + " and has fallen asleep.");		
+			}
+
+			while(this.classInSession){
+				this.idle();
+			}
+			period++;
+			if(period == 5){
+				this.schoolInSession = false;
+			}
+			this.sleepMessage(" is hurrying to have fun before next class");
 		}
 
 		//Student finishes day
@@ -127,6 +162,14 @@ public class StudentThread extends Thread{
 		return i == 1;
 	}
 	
+	public void setClassInSession(boolean session){
+		this.classInSession = session;
+	}
+
+	public boolean getClassInSession(){
+		return this.classInSession;
+	}
+
 	public void setSchoolInSession(boolean session){
 		this.schoolInSession = session;
 	}
