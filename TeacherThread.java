@@ -4,8 +4,10 @@ public class TeacherThread extends Thread{
 	
 	public static final int GIRL = 0;
 	public static final int BOY = 1;
+	public static final int SLEEP_TIME = 3000;
+	public static final int TEACH_TIME = 5000;
 	public static long time = System.currentTimeMillis();
-	private int classSize = 12;
+	private int classSize;
 	private int girlsBathroomCount = 0;
 	private int boysBathroomCount = 0;
 	private StudentThread [] students;
@@ -13,13 +15,23 @@ public class TeacherThread extends Thread{
 	private boolean isTeaching = false;
 	AtomicBoolean atomicBoolean = new AtomicBoolean(true); 
 
-	public TeacherThread(){
+	public TeacherThread(int size){
+		this.classSize = size;
+
 		students = new StudentThread[classSize];
 		bathroomQueue = new int[classSize];
 
 		for(int i = 0; i < classSize; i++){
 			students[i] = new StudentThread(i);
 		}
+	}
+	public TeacherThread(){
+		this(13);
+	}
+		
+	
+	public void run(){
+		System.out.println("Teacher thread created");
 		
 		for(int i = 0; i < classSize; i++){
 			students[i].start();
@@ -34,6 +46,7 @@ public class TeacherThread extends Thread{
 			for(int j = 0; j < classSize; j++){
 				//checks if student is busy waiting in schoolyard, then teacher lets them in
 				//students are put into the bathroom queue based on the order they were let into the school
+				//this makes sure the students go to the bathroom in a FCFS manner 
 				if(students[j].getBusy() == 1){
 					students[j].setBusy(0);
 					bathroomQueue[brPosition] = j;
@@ -78,23 +91,14 @@ public class TeacherThread extends Thread{
 		
 		//just for the first class, make sure all students are ready
 		this.sleepMessage("is getting ready to teach first class."); 
-		this.printMessage("is teaching the first class, period 1");
 		for(int i = 0; i < classSize;){
 			if(students[i].getWaitingForClass() == 1){
 				students[i].setWaitingForClass(0);	
-				students[i].setClassInSession(true);
 				i++;
 			}
 		}
-		try{
-			this.sleep(100);
-		}
-		catch(InterruptedException e){
-		}
-		this.wakeUpStudents();
-		
 		atomicBoolean.set(true);
-		int period = 2;
+		int period = 1;
 		//teach the rest of the classes
 		while(atomicBoolean.get()){
 			if(period == 3){
@@ -116,7 +120,7 @@ public class TeacherThread extends Thread{
 			}
 			
 			try{
-				this.sleep(5000);
+				this.sleep(TEACH_TIME);
 			}
 			catch(InterruptedException e){
 			}
@@ -132,8 +136,10 @@ public class TeacherThread extends Thread{
 				atomicBoolean.set(false);
 			}
 		}
-
+		
+		//line up all students and make sure they join the n-1 student
 		for(int i = 0; i < classSize;){
+			//except for the last student, they must join the teacher
 			if(i == classSize-1){
 				break;
 			}
@@ -145,9 +151,12 @@ public class TeacherThread extends Thread{
 			}
 		}
 			
-		if(students[classSize-1].isAlive() && students[classSize-1].getWaiting() == 1){
-			students[classSize-1].setWaiting(0);
-			students[classSize-1].joinMessage(" has joined the teacher and is now going home");
+		//makes sure the last student is ready before joining the teacher
+		while(students[classSize-1].isAlive()){
+			if(students[classSize-1].getWaiting() == 1){
+				students[classSize-1].setWaiting(0);
+				students[classSize-1].joinMessage(" has joined the teacher and is now going home");
+			}
 		}
 		
 		for(int i = 0; i < classSize; i++){
@@ -157,14 +166,10 @@ public class TeacherThread extends Thread{
 		this.printMessage("is done teaching class, now going home and locking up the school");
 	}
 	
-	public void run(){
-		System.out.println("Teacher thread created");
-	}
-	
 	public void sleepMessage(String msg){
 		try{
 			System.out.println("[" + (System.currentTimeMillis() - time) + "] " + "Teacher " + msg);
-			this.sleep(3000);
+			this.sleep(SLEEP_TIME);
 		}
 		catch(InterruptedException e){
 
@@ -181,9 +186,5 @@ public class TeacherThread extends Thread{
 				this.students[i].interruptMessage(" is woken up by the teacher! (INTERRUPTED)");
 			}
 		}
-	}
-
-	public boolean getIsTeaching(){
-		return this.isTeaching;
 	}
 }
