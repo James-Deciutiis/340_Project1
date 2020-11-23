@@ -5,7 +5,7 @@ public class TeacherThread extends Thread{
 	public static final int GIRL = 0;
 	public static final int BOY = 1;
 	public static long time = System.currentTimeMillis();
-	private int classSize = 4;
+	private int classSize = 12;
 	private int girlsBathroomCount = 0;
 	private int boysBathroomCount = 0;
 	private StudentThread [] students;
@@ -18,7 +18,7 @@ public class TeacherThread extends Thread{
 		bathroomQueue = new int[classSize];
 
 		for(int i = 0; i < classSize; i++){
-			students[i] = new StudentThread(Integer.toString(i));
+			students[i] = new StudentThread(i);
 		}
 		
 		for(int i = 0; i < classSize; i++){
@@ -116,7 +116,7 @@ public class TeacherThread extends Thread{
 			}
 			
 			try{
-				this.sleep(10000);
+				this.sleep(5000);
 			}
 			catch(InterruptedException e){
 			}
@@ -128,15 +128,32 @@ public class TeacherThread extends Thread{
 				students[i].setClassInSession(false);
 			}
 
-			if(period == 5){
+			if(period == 6){
 				atomicBoolean.set(false);
 			}
 		}
 
-		for(int i = 0; i < classSize; i++){
-			students[i].setSchoolInSession(false);
+		for(int i = 0; i < classSize;){
+			if(i == classSize-1){
+				break;
+			}
+
+			if(students[i].isAlive() && students[i].getWaiting() == 1){
+				students[i].setWaiting(0);
+				students[i].joinMessage(" has joined student " + (i+1) + " and is now going home");
+				i++;
+			}
+		}
+			
+		if(students[classSize-1].isAlive() && students[classSize-1].getWaiting() == 1){
+			students[classSize-1].setWaiting(0);
+			students[classSize-1].joinMessage(" has joined the teacher and is now going home");
 		}
 		
+		for(int i = 0; i < classSize; i++){
+			students[i].printReport();
+		}
+
 		this.printMessage("is done teaching class, now going home and locking up the school");
 	}
 	
@@ -147,7 +164,7 @@ public class TeacherThread extends Thread{
 	public void sleepMessage(String msg){
 		try{
 			System.out.println("[" + (System.currentTimeMillis() - time) + "] " + "Teacher " + msg);
-			this.sleep(8000);
+			this.sleep(3000);
 		}
 		catch(InterruptedException e){
 

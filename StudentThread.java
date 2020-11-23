@@ -1,22 +1,26 @@
 import java.util.Random;
 public class StudentThread extends Thread{
+
 	public static final int GIRL = 0;
 	public static final int BOY = 1;
-	public static final int MAX_SLEEP_TIME = 10000;
+	public static final int MAX_SLEEP_TIME = 5000;
 	public static long time = System.currentTimeMillis();
-	private String Student_Id;
+	private int Student_Id;
 	private int gender;
 	private int busy;
 	private int waiting;
 	private int waitingForClass;
 	private int doneWithBathroom = 0;
+	private int classesAttended = 0;
 	private boolean classInSession = false;
 	private boolean schoolInSession = true;
+	private String [] classReport;
 
-	public StudentThread(String id){
+	public StudentThread(int id){
 		this.Student_Id = id;
 		this.gender = getRandomGender();
 		this.printMessage(" Gender is: " + this.gender);
+		this.classReport = new String[5]; 
 	}
 
 	public void run(){
@@ -66,24 +70,37 @@ public class StudentThread extends Thread{
 			this.idle();
 		}
 		this.sleepMessage(" is attending the first class and is now sleeping.");
+		this.classReport[classesAttended] = "Period: 1, class: 1";
+		this.classesAttended++;
 		this.classInSession = false;
 		this.sleepMessage(" is hurrying to have fun before next class");
 		
 		//student tries to have fun between class
 		int period = 2;
+		int classNumber = 2;
 		while(this.schoolInSession){	
-			if(period == 5){
-				this.schoolInSession = false;
-			}
 			this.waiting = 0;
 			this.busy = 1;
+
+			//if class is in session before they get there then they've missed class and have to wander campus
 			if(this.classInSession){
-				this.sleepMessage(" has missed period: " + period + " and is now wandering around campus");	
-				period++;
+				if(period == 3){
+					this.sleepMessage(" has missed period: " + period + " class: office hours, and is now wandering around campus");	
+					period++;
+				}
+				else{
+					this.sleepMessage(" has missed period: " + period + " class: " + classNumber + " and is now wandering around campus");	
+					period++;
+					classNumber++;
+				}
+
 				while(this.classInSession){
 					this.idle();
 				}
-				continue;
+				if(period == 6){
+					this.schoolInSession = false;
+					continue;
+				}
 			}
 			
 			this.waiting = 1;
@@ -94,23 +111,35 @@ public class StudentThread extends Thread{
 
 			if(period == 3){
 				this.sleepMessage(" is in office hours, period: " + period + " and has fallen asleep.");		
+				this.classReport[classesAttended] = "Period: 3, office hours";
+				this.classesAttended++;
 			}
 			else{
-				this.sleepMessage(" is in class, period: " + period + " and has fallen asleep.");		
+				this.sleepMessage(" is in period: " + period + " class: " + classNumber + " and has fallen asleep.");		
+				this.classReport[classesAttended] = "Period: " + period + ", class: " + classNumber;
+				this.classesAttended++;
+				classNumber++;
 			}
 
 			while(this.classInSession){
 				this.idle();
 			}
 			period++;
-			if(period == 5){
+			if(period == 6){
 				this.schoolInSession = false;
+				continue;
 			}
 			this.sleepMessage(" is hurrying to have fun before next class");
 		}
 
+		this.printMessage(" is waiting to join their friend before they go home");
+		this.waiting = 1;
+		while(this.waiting == 1){
+			this.idle();
+		}
+
 		//Student finishes day
-		this.printMessage(" is done");
+		this.printMessage(" has finished school");
 	}
 	
 	public void sleepMessage(String msg){
@@ -139,6 +168,26 @@ public class StudentThread extends Thread{
 	
 	public void printMessage(String msg){
 		System.out.println("[" + (System.currentTimeMillis() - time) + "] " + "Student " + this.Student_Id + msg);
+	}
+	
+	public void printReport(){
+		System.out.println("<---------- End of school report for student: " + this.Student_Id + " ---------->");
+		System.out.println("Number of classes attended: " + this.classesAttended + " out of 5 total");
+		System.out.println("Classes attended: "); 
+		
+		for(int i = 0; i < this.classesAttended; i++){
+			System.out.println(this.classReport[i]);
+		}
+	}
+		
+	public void joinMessage(String msg){
+		try{
+			System.out.println("[" + (System.currentTimeMillis() - time) + "] " + "Student " + this.Student_Id + msg);
+			this.join();	
+		}
+		catch(InterruptedException e){
+			return;
+		}
 	}
 
 	public int getRandomSleepTime(){
